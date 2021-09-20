@@ -5,5 +5,6 @@ const productRouter = express.Router();
 
 productRouter.post('/add', productController.addProduct);
 productRouter.post('/delete', productController.deleteProduct);
+productRouter.post('/update', productController.updateProduct);
 productRouter.get('/list', productController.getProduct);
 module.exports = productRouter;
