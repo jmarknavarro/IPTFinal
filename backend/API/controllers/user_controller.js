@@ -134,34 +134,33 @@ exports.createUser = (req, res, next) => {
 };
 
 exports.getUserList = (req, res, next) => {
-  let selectUsers = `SELECT username FROM users`;
-
-  db.query(
-    (selectUsers = (err, rows, result) => {
-      if (err) {
-        sendErrorResponse();
+  let listUsersQuery = `SELECT Username, FirstName, LastName FROM accounts`;
+  db.query(listUsersQuery, (err, rows, result) => {
+    if (err) {
+      res.status(500).send({
+        successful: false,
+        message: err,
+      });
+    } else {
+      if (rows.length == 0) {
+        res.status(200).send({
+          successful: true,
+          message: "No User Found",
+        });
       } else {
-        if (rows.length == 0) {
-          res.status(200).send({
-            successful: true,
-            message: "No User Found",
-          });
-        } else {
-          res.status(200).send({
-            successful: true,
-            message: "Records Found:",
-            list: rows,
-          });
-        }
+        res.status(200).send({
+          successful: true,
+          message: "Records Found:",
+          list: rows,
+        });
       }
-    })
-  );
+    }
+  });
 };
-
 exports.updateUser = (req, res, next) => {
-  let newUsername = req.body.username;
-  let newPassword = req.body.password;
-  let username = req.params.username;
+  let username = req.query.username;
+  let newUsername = req.body.newUsername;
+  let newPassword = req.body.newPassword;
 
   if (
     username == " " ||
@@ -173,13 +172,13 @@ exports.updateUser = (req, res, next) => {
   ) {
     res.status(500).send({
       successful: false,
-      message: "Fields Required: Username, Password, New Username",
+      message: "Fields Required: Username, New Password, New Username",
     });
   } else {
     //validate if new username is taken
     //validate if username  is existing in the database
 
-    let selectUsernameQuery = `SELECT Username FROM accounts WHERE Username = '${newUsername}'`;
+    let selectUsernameQuery = `SELECT Username FROM accounts WHERE Username = '${username}'`;
 
     db.query(selectUsernameQuery, (err, rows, result) => {
       if (err) {
@@ -193,34 +192,23 @@ exports.updateUser = (req, res, next) => {
           message: "Username doesn't Exists",
         });
       } else {
-        let selectNewUsernameQuery = `SELECT Username FROM Users WHERE Username = '${username}'`;
+        let updateUserQuery = `UPDATE accounts SET Username = '${newUsername}', Password = '${newPassword}' WHERE Username = '${username}'`;
 
-        db.query(selectNewUsernameQuery, (err, rows, result) => {
+        db.query(updateUserQuery, (err, rows, result) => {
           if (err) {
             res.status(500).send({
               successful: false,
               message: err,
             });
-          } else if (rows.length == 0) {
-            let updateUserQuery = `UPDATE accounts SET Username = '${newUsername}', Password = '${newPassword}' WHERE Username = '${username}'`;
-
-            db.query(updateUserQuery, (err, rows, result) => {
-              if (err) {
-                res.status(500).send({
-                  successful: false,
-                  message: err,
-                });
-              } else if (rows.affectedRows == 0) {
-                res.status(404).send({
-                  successful: true,
-                  message: "No records updated",
-                });
-              } else {
-                res.status(200).send({
-                  successful: true,
-                  message: "Username & Password Updated",
-                });
-              }
+          } else if (rows.affectedRows == 0) {
+            res.status(404).send({
+              successful: true,
+              message: "No records updated",
+            });
+          } else {
+            res.status(200).send({
+              successful: true,
+              message: "Username & Password Updated",
             });
           }
         });
@@ -238,7 +226,7 @@ exports.deleteUser = (req, res, next) => {
       message: "Username is required.",
     });
   } else {
-    let deleteQuery = `DELETE FROM users WHERE username = '${username}'`;
+    let deleteQuery = `DELETE FROM accounts WHERE Username = '${username}'`;
 
     db.query(deleteQuery, (err, rows, result) => {
       if (err) {
